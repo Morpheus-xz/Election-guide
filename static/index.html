@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ask Civvy — Your Election Guide</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Source+Sans+3:wght@300;400;600&display=swap"
+    rel="stylesheet"
+  />
+  <link rel="stylesheet" href="/static/style.css?v=2" />
+</head>
+<body>
+  <div class="app-layout">
+
+    <!-- ═══════════════ SIDEBAR ═══════════════ -->
+    <aside class="sidebar" id="sidebar">
+
+      <div class="sidebar-logo">
+        <span class="logo-icon">🗳️</span>
+        <div>
+          <div class="logo-title">Civvy</div>
+          <div class="logo-sub">Your Election Guide</div>
+        </div>
+      </div>
+
+      <div class="sidebar-divider"></div>
+
+      <div class="sidebar-section">
+        <div class="sidebar-section-title">🌍 Select Your Country</div>
+        <select class="country-select" id="countrySelect">
+          <option value="India">🇮🇳  India</option>
+          <option value="United States">🇺🇸  United States</option>
+          <option value="United Kingdom">🇬🇧  United Kingdom</option>
+          <option value="Australia">🇦🇺  Australia</option>
+          <option value="Canada">🇨🇦  Canada</option>
+          <option value="Other">🌍  Other</option>
+        </select>
+      </div>
+
+      <div class="sidebar-divider"></div>
+
+      <div class="sidebar-section">
+        <div class="sidebar-section-title">📚 Quick Topics</div>
+        <div class="topic-list">
+          <button class="topic-btn" data-topic="How to register to vote">🗂️ How to Register</button>
+          <button class="topic-btn" data-topic="Election timeline and key dates">📅 Election Timeline</button>
+          <button class="topic-btn" data-topic="How voting works on election day">🏛️ How Voting Works</button>
+          <button class="topic-btn" data-topic="How votes are counted">📊 How Votes Are Counted</button>
+          <button class="topic-btn" data-topic="How election results are certified">✅ How Results Are Certified</button>
+          <button class="topic-btn" data-topic="Common election FAQs">❓ Common FAQs</button>
+        </div>
+      </div>
+
+      <div class="sidebar-footer">
+        <div class="powered-badge">✦ Powered by Gemini</div>
+        <div class="disclaimer">Nonpartisan &amp; Educational</div>
+      </div>
+
+    </aside>
+
+    <!-- ═══════════════ MAIN AREA ═══════════════ -->
+    <div class="main">
+
+      <!-- TOP BAR (desktop) -->
+      <div class="top-bar">
+        <div class="top-bar-left">
+          <div class="country-heading">
+            <span id="countryFlag">🇮🇳</span>
+            <span id="countryLabel">Elections in India</span>
+          </div>
+        </div>
+        <div class="top-bar-right">
+          <div class="civvy-status">
+            <div class="civvy-avatar-sm">🏛️</div>
+            <span class="civvy-ready">Civvy is ready to help</span>
+          </div>
+          <button class="new-chat-btn" id="newChatBtn">↺ New Chat</button>
+        </div>
+      </div>
+
+      <!-- MOBILE BAR (hidden on desktop) -->
+      <div class="mobile-bar" id="mobileBar">
+        <div class="mobile-top-row">
+          <div class="mobile-brand">🗳️ <strong>Civvy</strong></div>
+          <select class="country-select-mobile" id="countrySelectMobile">
+            <option value="India">🇮🇳 India</option>
+            <option value="United States">🇺🇸 United States</option>
+            <option value="United Kingdom">🇬🇧 United Kingdom</option>
+            <option value="Australia">🇦🇺 Australia</option>
+            <option value="Canada">🇨🇦 Canada</option>
+            <option value="Other">🌍 Other</option>
+          </select>
+        </div>
+        <div class="mobile-topics" id="mobileTopics">
+          <button class="mobile-topic-btn" data-topic="How to register to vote">📋 Register</button>
+          <button class="mobile-topic-btn" data-topic="Election timeline and key dates">📅 Timeline</button>
+          <button class="mobile-topic-btn" data-topic="How voting works on election day">🏛️ Voting</button>
+          <button class="mobile-topic-btn" data-topic="How votes are counted">📊 Counting</button>
+          <button class="mobile-topic-btn" data-topic="How election results are certified">✅ Results</button>
+          <button class="mobile-topic-btn" data-topic="Common election FAQs">❓ FAQs</button>
+        </div>
+      </div>
+
+      <!-- CHAT WINDOW -->
+      <div class="chat-window" id="chatWindow" role="log" aria-live="polite"></div>
+
+      <!-- TYPING INDICATOR -->
+      <div class="typing-wrapper" id="typingWrapper" aria-hidden="true">
+        <div class="civvy-avatar-sm">🏛️</div>
+        <div class="typing-card">
+          <span></span><span></span><span></span>
+        </div>
+      </div>
+
+      <!-- INPUT AREA -->
+      <div class="input-area">
+        <div class="input-row">
+          <textarea
+            id="userInput"
+            class="input-field"
+            placeholder="Ask Civvy about India elections..."
+            rows="1"
+            autocomplete="off"
+            aria-label="Message input"
+          ></textarea>
+          <button class="send-btn" id="sendBtn" aria-label="Send message">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="18" height="18">
+              <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
+            </svg>
+          </button>
+        </div>
+        <div class="tip-bar">
+          <span class="tip-text" id="tipText"></span>
+        </div>
+      </div>
+
+    </div><!-- /.main -->
+  </div><!-- /.app-layout -->
+
+  <script src="/static/script.js?v=2"></script>
+</body>
+</html>

@@ -1,25 +1,66 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="light">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Ask Civvy — Your Election Guide</title>
+  <title>Civvy — AI Election Guide</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link
-    href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Source+Sans+3:wght@300;400;600&display=swap"
-    rel="stylesheet"
-  />
-  <link rel="stylesheet" href="/static/style.css?v=2" />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Source+Sans+3:wght@300;400;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/static/style.css?v=3" />
 </head>
 <body>
+
+  <!-- ── Gemini loading bar (YouTube-style, top of viewport) ── -->
+  <div class="progress-bar" id="progressBar"></div>
+
+  <!-- ══════════════ COMPARE MODAL ══════════════ -->
+  <div class="modal-overlay" id="compareModal" role="dialog" aria-modal="true" aria-label="Compare countries">
+    <div class="modal-box">
+      <div class="modal-header">
+        <span>⚖️ Compare Two Countries</span>
+        <button class="modal-close" id="compareClose" aria-label="Close">✕</button>
+      </div>
+      <div class="modal-body">
+        <label class="modal-label">First country</label>
+        <select class="modal-select" id="cmp1">
+          <option value="India">🇮🇳 India</option>
+          <option value="United States">🇺🇸 United States</option>
+          <option value="United Kingdom">🇬🇧 United Kingdom</option>
+          <option value="Australia">🇦🇺 Australia</option>
+          <option value="Canada">🇨🇦 Canada</option>
+          <option value="Other">🌍 Other</option>
+        </select>
+        <label class="modal-label" style="margin-top:14px">Second country</label>
+        <select class="modal-select" id="cmp2">
+          <option value="United States">🇺🇸 United States</option>
+          <option value="India">🇮🇳 India</option>
+          <option value="United Kingdom">🇬🇧 United Kingdom</option>
+          <option value="Australia">🇦🇺 Australia</option>
+          <option value="Canada">🇨🇦 Canada</option>
+          <option value="Other">🌍 Other</option>
+        </select>
+        <button class="modal-submit-btn" id="compareSubmit">Compare Now →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════ APP SHELL ══════════════ -->
   <div class="app-layout">
 
-    <!-- ═══════════════ SIDEBAR ═══════════════ -->
+    <!-- ═══════════ SIDEBAR ═══════════ -->
     <aside class="sidebar" id="sidebar">
 
       <div class="sidebar-logo">
-        <span class="logo-icon">🗳️</span>
+        <!-- SVG ballot-box avatar -->
+        <div class="logo-svg-wrap">
+          <svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" width="32" height="32" aria-hidden="true">
+            <rect x="3" y="13" width="26" height="16" rx="3" fill="#0D1B2A" stroke="#C9A84C" stroke-width="1.8"/>
+            <path d="M3 19h26" stroke="#C9A84C" stroke-width="1.8"/>
+            <path d="M11 13V10a5 5 0 0 1 10 0v3" stroke="#C9A84C" stroke-width="1.8" stroke-linecap="round"/>
+            <path d="M12 23.5l3 3 5-6" stroke="#C9A84C" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
         <div>
           <div class="logo-title">Civvy</div>
           <div class="logo-sub">Your Election Guide</div>
@@ -28,9 +69,10 @@
 
       <div class="sidebar-divider"></div>
 
+      <!-- Country + Language -->
       <div class="sidebar-section">
-        <div class="sidebar-section-title">🌍 Select Your Country</div>
-        <select class="country-select" id="countrySelect">
+        <div class="sidebar-section-title">🌍 Country</div>
+        <select class="sidebar-select" id="countrySelect">
           <option value="India">🇮🇳  India</option>
           <option value="United States">🇺🇸  United States</option>
           <option value="United Kingdom">🇬🇧  United Kingdom</option>
@@ -38,10 +80,22 @@
           <option value="Canada">🇨🇦  Canada</option>
           <option value="Other">🌍  Other</option>
         </select>
+        <div class="sidebar-section-title" style="margin-top:12px">🗣️ Language</div>
+        <select class="sidebar-select" id="langSelect">
+          <option value="English">English</option>
+          <option value="Hindi">हिंदी (Hindi)</option>
+          <option value="Tamil">தமிழ் (Tamil)</option>
+          <option value="Telugu">తెలుగు (Telugu)</option>
+          <option value="Bengali">বাংলা (Bengali)</option>
+          <option value="Marathi">मराठी (Marathi)</option>
+          <option value="Spanish">Español (Spanish)</option>
+          <option value="French">Français (French)</option>
+        </select>
       </div>
 
       <div class="sidebar-divider"></div>
 
+      <!-- Quick Topics -->
       <div class="sidebar-section">
         <div class="sidebar-section-title">📚 Quick Topics</div>
         <div class="topic-list">
@@ -54,6 +108,34 @@
         </div>
       </div>
 
+      <div class="sidebar-divider"></div>
+
+      <!-- Tools -->
+      <div class="sidebar-section">
+        <div class="sidebar-section-title">🛠️ Tools</div>
+        <button class="action-btn" id="quizBtn">📝 Test Your Knowledge</button>
+        <button class="action-btn" id="compareBtn">⚖️ Compare Countries</button>
+        <button class="action-btn" id="glossaryBtn">📖 Election Glossary</button>
+      </div>
+
+      <div class="sidebar-divider"></div>
+
+      <!-- Election at a Glance -->
+      <div class="sidebar-section">
+        <div class="sidebar-section-title">📊 Election at a Glance</div>
+        <div class="stats-grid" id="statsGrid"></div>
+      </div>
+
+      <div class="sidebar-divider"></div>
+
+      <!-- Did You Know -->
+      <div class="sidebar-section">
+        <div class="sidebar-section-title">🏆 Did You Know?</div>
+        <div class="fact-text" id="factText">Loading a fascinating election fact…</div>
+        <button class="refresh-fact-btn" id="refreshFactBtn" title="Load another fact">↺ New Fact</button>
+      </div>
+
+      <!-- Footer -->
       <div class="sidebar-footer">
         <div class="powered-badge">✦ Powered by Gemini</div>
         <div class="disclaimer">Nonpartisan &amp; Educational</div>
@@ -61,22 +143,26 @@
 
     </aside>
 
-    <!-- ═══════════════ MAIN AREA ═══════════════ -->
+    <!-- ═══════════ MAIN ═══════════ -->
     <div class="main">
 
       <!-- TOP BAR (desktop) -->
       <div class="top-bar">
         <div class="top-bar-left">
+          <div class="online-indicator" title="Civvy is online">
+            <span class="pulse-dot"></span>
+            <span class="online-label">Civvy is online</span>
+          </div>
           <div class="country-heading">
             <span id="countryFlag">🇮🇳</span>
-            <span id="countryLabel">Elections in India</span>
+            <div>
+              <div id="countryLabel">Elections in India</div>
+              <div class="country-sub" id="countrySub">Ask me anything about India's election process</div>
+            </div>
           </div>
         </div>
         <div class="top-bar-right">
-          <div class="civvy-status">
-            <div class="civvy-avatar-sm">🏛️</div>
-            <span class="civvy-ready">Civvy is ready to help</span>
-          </div>
+          <button class="icon-btn" id="darkModeBtn" aria-label="Toggle dark mode" title="Toggle dark mode">🌙</button>
           <button class="new-chat-btn" id="newChatBtn">↺ New Chat</button>
         </div>
       </div>
@@ -84,23 +170,27 @@
       <!-- MOBILE BAR (hidden on desktop) -->
       <div class="mobile-bar" id="mobileBar">
         <div class="mobile-top-row">
-          <div class="mobile-brand">🗳️ <strong>Civvy</strong></div>
-          <select class="country-select-mobile" id="countrySelectMobile">
-            <option value="India">🇮🇳 India</option>
-            <option value="United States">🇺🇸 United States</option>
-            <option value="United Kingdom">🇬🇧 United Kingdom</option>
-            <option value="Australia">🇦🇺 Australia</option>
-            <option value="Canada">🇨🇦 Canada</option>
-            <option value="Other">🌍 Other</option>
-          </select>
+          <span class="mobile-brand">🗳️ <strong>Civvy</strong></span>
+          <div style="display:flex;gap:8px;align-items:center">
+            <select class="country-select-mobile" id="countrySelectMobile">
+              <option value="India">🇮🇳 India</option>
+              <option value="United States">🇺🇸 United States</option>
+              <option value="United Kingdom">🇬🇧 United Kingdom</option>
+              <option value="Australia">🇦🇺 Australia</option>
+              <option value="Canada">🇨🇦 Canada</option>
+              <option value="Other">🌍 Other</option>
+            </select>
+            <button class="icon-btn sm" id="darkModeBtnMobile" aria-label="Toggle dark mode">🌙</button>
+          </div>
         </div>
-        <div class="mobile-topics" id="mobileTopics">
+        <div class="mobile-topics">
           <button class="mobile-topic-btn" data-topic="How to register to vote">📋 Register</button>
           <button class="mobile-topic-btn" data-topic="Election timeline and key dates">📅 Timeline</button>
           <button class="mobile-topic-btn" data-topic="How voting works on election day">🏛️ Voting</button>
           <button class="mobile-topic-btn" data-topic="How votes are counted">📊 Counting</button>
           <button class="mobile-topic-btn" data-topic="How election results are certified">✅ Results</button>
-          <button class="mobile-topic-btn" data-topic="Common election FAQs">❓ FAQs</button>
+          <button class="mobile-topic-btn" id="mobileQuizBtn">📝 Quiz</button>
+          <button class="mobile-topic-btn" id="mobileGlossaryBtn">📖 Glossary</button>
         </div>
       </div>
 
@@ -109,7 +199,14 @@
 
       <!-- TYPING INDICATOR -->
       <div class="typing-wrapper" id="typingWrapper" aria-hidden="true">
-        <div class="civvy-avatar-sm">🏛️</div>
+        <div class="civvy-avatar-sm">
+          <svg viewBox="0 0 24 24" fill="none" width="16" height="16">
+            <rect x="2" y="9" width="20" height="12" rx="2" fill="#0D1B2A" stroke="#C9A84C" stroke-width="1.5"/>
+            <path d="M2 14h20" stroke="#C9A84C" stroke-width="1.5"/>
+            <path d="M8 9V7a4 4 0 0 1 8 0v2" stroke="#C9A84C" stroke-width="1.5"/>
+            <path d="M9 18l2.5 2.5 4-5" stroke="#C9A84C" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
         <div class="typing-card">
           <span></span><span></span><span></span>
         </div>
@@ -118,10 +215,11 @@
       <!-- INPUT AREA -->
       <div class="input-area">
         <div class="input-row">
+          <button class="voice-btn" id="voiceBtn" aria-label="Voice input" title="Voice input">🎤</button>
           <textarea
             id="userInput"
             class="input-field"
-            placeholder="Ask Civvy about India elections..."
+            placeholder="Ask Civvy about India elections…"
             rows="1"
             autocomplete="off"
             aria-label="Message input"
@@ -140,6 +238,6 @@
     </div><!-- /.main -->
   </div><!-- /.app-layout -->
 
-  <script src="/static/script.js?v=2"></script>
+  <script src="/static/script.js?v=3"></script>
 </body>
 </html>

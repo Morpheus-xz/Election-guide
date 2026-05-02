@@ -1,13 +1,19 @@
 """
 Civvy Election Guide — Application Configuration
-All constants live here. Nothing is hardcoded in other modules.
+
+Single source of truth for all application constants.
+Import from here — never hardcode values in other modules.
+
+Usage:
+    from app.config import GEMINI_MODEL, SUPPORTED_COUNTRIES
 """
 
 APP_NAME: str = "Civvy - Election Guide"
-VERSION: str = "3.0.0"
+VERSION: str = "4.0.0"
 GEMINI_MODEL: str = "gemini-2.5-flash"
 MAX_RETRIES: int = 3
 MAX_MESSAGE_LENGTH: int = 500
+MAX_HISTORY_TURNS: int = 20
 
 SUPPORTED_COUNTRIES: dict[str, dict] = {
     "India": {

@@ -1,5 +1,5 @@
 """
-Civvy Election Guide — FastAPI Backend  v3.0.0
+Civvy Election Guide — FastAPI Backend  v4.0.0
 Handles all AI interactions, response parsing, and structured endpoints.
 """
 
@@ -11,11 +11,26 @@ import re
 import time
 from typing import Any
 
-from fastapi import FastAPI, HTTPException, Query
+try:
+    import google.cloud.logging as cloud_logging
+    _cloud_logging_available = True
+except ImportError:
+    _cloud_logging_available = False
+
+try:
+    from google.cloud import translate_v2 as translate_client_lib
+    _translate_available = True
+except ImportError:
+    _translate_available = False
+
+from fastapi import FastAPI, HTTPException, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, Response
 from fastapi.staticfiles import StaticFiles
-from pydantic import BaseModel, field_validator
+from pydantic import BaseModel, Field, field_validator
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
+from slowapi.util import get_remote_address
 from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_exponential
 
 from google import genai
@@ -24,6 +39,7 @@ from google.genai import types
 from app.config import (
     APP_NAME,
     GEMINI_MODEL,
+    MAX_HISTORY_TURNS,
     MAX_MESSAGE_LENGTH,
     MAX_RETRIES,
     SUPPORTED_COUNTRIES,
@@ -39,16 +55,58 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+
+def setup_cloud_logging() -> None:
+    """
+    Configures Google Cloud Logging when running on GCP.
+    Falls back to standard logging in local development.
+    Logs all Python logging calls to Cloud Logging automatically.
+    """
+    if not _cloud_logging_available:
+        return
+    try:
+        client = cloud_logging.Client()
+        client.setup_logging()
+        logger.info("Google Cloud Logging configured successfully")
+    except Exception as exc:
+        logger.warning("Cloud Logging unavailable (likely local dev): %s", exc)
+
+
+setup_cloud_logging()
+
+limiter = Limiter(key_func=get_remote_address)
+
 # ─── App ──────────────────────────────────────────────────────────────────────
 app = FastAPI(title=APP_NAME, version=VERSION)
+
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
-    allow_credentials=True,
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+@app.middleware("http")
+async def add_security_headers(request: Request, call_next) -> Response:
+    """
+    Adds OWASP-recommended security headers to every HTTP response.
+    Prevents XSS, clickjacking, MIME-type sniffing, and data leakage.
+    """
+    response = await call_next(request)
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["X-Frame-Options"] = "DENY"
+    response.headers["X-XSS-Protection"] = "1; mode=block"
+    response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+    response.headers["Permissions-Policy"] = "geolocation=(), microphone=(self)"
+    response.headers["Strict-Transport-Security"] = (
+        "max-age=31536000; includeSubDomains"
+    )
+    return response
 
 # ─── Gemini client (initialised once at import time) ─────────────────────────
 _client = genai.Client(api_key=os.environ["GEMINI_API_KEY"])
@@ -149,6 +207,12 @@ class HealthResponse(BaseModel):
     app_name: str
 
 
+class TranslateRequest(BaseModel):
+    text: str = Field(..., min_length=1, max_length=2000)
+    target_language: str = Field(..., description="BCP-47 language code, e.g. 'hi', 'ta'")
+    source_language: str | None = Field(None, description="Optional source language")
+
+
 # ══════════════════════════════════════════════════════════════════════════════
 # Gemini Helpers
 # ══════════════════════════════════════════════════════════════════════════════
@@ -199,6 +263,8 @@ def _parse_chat_response(
     clean = text
 
     # ── Extract TIMELINE block ────────────────────────────────────────────
+    # Match TIMELINE block: starts at "TIMELINE:" marker, captures
+    # all lines that contain the 📅 emoji, stops at next section.
     tl_match = re.search(
         r"TIMELINE:\s*\n((?:[^\n]*📅[^\n]*\n?)+)", clean, re.MULTILINE
     )
@@ -209,6 +275,7 @@ def _parse_chat_response(
             if "📅" not in line:
                 continue
             line = line.replace("📅", "").strip()
+            # Tolerate various dash types (—, –, -) that LLMs sometimes mix up.
             for sep in [" — ", " – ", " - ", "—", "–"]:
                 if sep in line:
                     date_part, event_part = line.split(sep, 1)
@@ -228,6 +295,7 @@ def _parse_chat_response(
         follow_up = fu_match.group(1).strip()
     clean = re.sub(r"FOLLOW_UP:\s*.+?(?:\n|$)", "", clean)
 
+    # Collapse 3+ consecutive newlines to 2 to normalise LLM output spacing.
     clean = re.sub(r"\n{3,}", "\n\n", clean).strip()
     return clean, timeline, follow_up
 
@@ -291,7 +359,8 @@ async def list_countries() -> list[CountryInfo]:
 
 
 @app.post("/chat", response_model=ChatResponse, tags=["ai"])
-async def chat(request: ChatRequest) -> ChatResponse:
+@limiter.limit("30/minute")
+async def chat(request: Request, body: ChatRequest) -> ChatResponse:
     """
     Main conversational endpoint. Accepts a user message and prior
     history, calls Gemini with full country + language context, and
@@ -300,15 +369,18 @@ async def chat(request: ChatRequest) -> ChatResponse:
     t0 = time.monotonic()
     logger.info(
         "CHAT | country=%s | lang=%s | msg_len=%d | turns=%d",
-        request.country,
-        request.language,
-        len(request.message),
-        len(request.history),
+        body.country,
+        body.language,
+        len(body.message),
+        len(body.history),
     )
 
+    # Trim history to last MAX_HISTORY_TURNS to control token usage
+    trimmed_history = body.history[-MAX_HISTORY_TURNS:]
+
     contents = _build_gemini_history(
-        request.history, request.country, request.language
-    ) + [types.Content(role="user", parts=[types.Part(text=request.message)])]
+        trimmed_history, body.country, body.language
+    ) + [types.Content(role="user", parts=[types.Part(text=body.message)])]
 
     try:
         raw = await _gemini(contents)
@@ -472,6 +544,41 @@ Return ONLY a valid JSON object — no text before or after:
     except Exception as exc:
         logger.error("Fact generation failed: %s", exc)
         raise HTTPException(status_code=502, detail=f"Fact generation failed: {exc}")
+
+
+@app.post("/translate", tags=["google-services"])
+async def translate_text(request: TranslateRequest) -> dict:
+    """
+    Translates text using Google Cloud Translation API (v2).
+    Enables election content accessibility in regional Indian languages.
+    Supported target codes: hi (Hindi), ta (Tamil), te (Telugu),
+    bn (Bengali), mr (Marathi), es (Spanish), fr (French).
+    """
+    if not _translate_available:
+        raise HTTPException(
+            status_code=503,
+            detail="Translation service not available"
+        )
+    try:
+        client = translate_client_lib.Client()
+        result = client.translate(
+            request.text,
+            target_language=request.target_language,
+            source_language=request.source_language,
+        )
+        logger.info(
+            "TRANSLATE | target=%s | chars=%d",
+            request.target_language,
+            len(request.text)
+        )
+        return {
+            "translated_text": result["translatedText"],
+            "source_language": result.get("detectedSourceLanguage", request.source_language),
+            "target_language": request.target_language,
+        }
+    except Exception as exc:
+        logger.error("Translation failed: %s", exc)
+        raise HTTPException(status_code=502, detail=f"Translation service error: {exc}")
 
 
 # ─── Static files (mounted after all API routes) ──────────────────────────────

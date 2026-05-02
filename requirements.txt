@@ -5,3 +5,8 @@ python-dotenv
 httpx
 pydantic
 tenacity
+google-cloud-logging
+google-cloud-translate
+slowapi
+pytest
+pytest-asyncio

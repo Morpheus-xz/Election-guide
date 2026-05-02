@@ -10,6 +10,7 @@
   <link rel="stylesheet" href="/static/style.css?v=3" />
 </head>
 <body>
+  <a href="#userInput" class="skip-link">Skip to main content</a>
 
   <!-- ── Gemini loading bar (YouTube-style, top of viewport) ── -->
   <div class="progress-bar" id="progressBar"></div>
@@ -40,7 +41,7 @@
           <option value="Canada">🇨🇦 Canada</option>
           <option value="Other">🌍 Other</option>
         </select>
-        <button class="modal-submit-btn" id="compareSubmit">Compare Now →</button>
+        <button class="modal-submit-btn" id="compareSubmit" aria-label="Run country comparison">Compare Now →</button>
       </div>
     </div>
   </div>
@@ -72,7 +73,9 @@
       <!-- Country + Language -->
       <div class="sidebar-section">
         <div class="sidebar-section-title">🌍 Country</div>
-        <select class="sidebar-select" id="countrySelect">
+        <select class="sidebar-select" id="countrySelect"
+                aria-label="Select country for election information"
+                aria-describedby="country-select-help">
           <option value="India">🇮🇳  India</option>
           <option value="United States">🇺🇸  United States</option>
           <option value="United Kingdom">🇬🇧  United Kingdom</option>
@@ -80,8 +83,13 @@
           <option value="Canada">🇨🇦  Canada</option>
           <option value="Other">🌍  Other</option>
         </select>
+        <span id="country-select-help" class="sr-only">
+          Choose a country to get specific election information from Civvy
+        </span>
         <div class="sidebar-section-title" style="margin-top:12px">🗣️ Language</div>
-        <select class="sidebar-select" id="langSelect">
+        <select class="sidebar-select" id="langSelect"
+                aria-label="Select response language"
+                aria-describedby="lang-select-help">
           <option value="English">English</option>
           <option value="Hindi">हिंदी (Hindi)</option>
           <option value="Tamil">தமிழ் (Tamil)</option>
@@ -91,6 +99,9 @@
           <option value="Spanish">Español (Spanish)</option>
           <option value="French">Français (French)</option>
         </select>
+        <span id="lang-select-help" class="sr-only">
+          Civvy will respond in your selected language
+        </span>
       </div>
 
       <div class="sidebar-divider"></div>
@@ -113,9 +124,9 @@
       <!-- Tools -->
       <div class="sidebar-section">
         <div class="sidebar-section-title">🛠️ Tools</div>
-        <button class="action-btn" id="quizBtn">📝 Test Your Knowledge</button>
-        <button class="action-btn" id="compareBtn">⚖️ Compare Countries</button>
-        <button class="action-btn" id="glossaryBtn">📖 Election Glossary</button>
+        <button class="action-btn" id="quizBtn" aria-label="Start election knowledge quiz">📝 Test Your Knowledge</button>
+        <button class="action-btn" id="compareBtn" aria-label="Compare two countries election systems">⚖️ Compare Countries</button>
+        <button class="action-btn" id="glossaryBtn" aria-label="Open election terms glossary">📖 Election Glossary</button>
       </div>
 
       <div class="sidebar-divider"></div>
@@ -132,7 +143,7 @@
       <div class="sidebar-section">
         <div class="sidebar-section-title">🏆 Did You Know?</div>
         <div class="fact-text" id="factText">Loading a fascinating election fact…</div>
-        <button class="refresh-fact-btn" id="refreshFactBtn" title="Load another fact">↺ New Fact</button>
+        <button class="refresh-fact-btn" id="refreshFactBtn" aria-label="Load a new election fact" title="Load another fact">↺ New Fact</button>
       </div>
 
       <!-- Footer -->
@@ -163,7 +174,7 @@
         </div>
         <div class="top-bar-right">
           <button class="icon-btn" id="darkModeBtn" aria-label="Toggle dark mode" title="Toggle dark mode">🌙</button>
-          <button class="new-chat-btn" id="newChatBtn">↺ New Chat</button>
+          <button class="new-chat-btn" id="newChatBtn" aria-label="Start a new conversation">↺ New Chat</button>
         </div>
       </div>
 
@@ -184,13 +195,13 @@
           </div>
         </div>
         <div class="mobile-topics">
-          <button class="mobile-topic-btn" data-topic="How to register to vote">📋 Register</button>
-          <button class="mobile-topic-btn" data-topic="Election timeline and key dates">📅 Timeline</button>
-          <button class="mobile-topic-btn" data-topic="How voting works on election day">🏛️ Voting</button>
-          <button class="mobile-topic-btn" data-topic="How votes are counted">📊 Counting</button>
-          <button class="mobile-topic-btn" data-topic="How election results are certified">✅ Results</button>
-          <button class="mobile-topic-btn" id="mobileQuizBtn">📝 Quiz</button>
-          <button class="mobile-topic-btn" id="mobileGlossaryBtn">📖 Glossary</button>
+          <button class="mobile-topic-btn" data-topic="How to register to vote" aria-label="Ask about voter registration">📋 Register</button>
+          <button class="mobile-topic-btn" data-topic="Election timeline and key dates" aria-label="Ask about election timeline">📅 Timeline</button>
+          <button class="mobile-topic-btn" data-topic="How voting works on election day" aria-label="Ask how voting works">🏛️ Voting</button>
+          <button class="mobile-topic-btn" data-topic="How votes are counted" aria-label="Ask how votes are counted">📊 Counting</button>
+          <button class="mobile-topic-btn" data-topic="How election results are certified" aria-label="Ask about result certification">✅ Results</button>
+          <button class="mobile-topic-btn" id="mobileQuizBtn" aria-label="Start election quiz">📝 Quiz</button>
+          <button class="mobile-topic-btn" id="mobileGlossaryBtn" aria-label="Open election glossary">📖 Glossary</button>
         </div>
       </div>
 

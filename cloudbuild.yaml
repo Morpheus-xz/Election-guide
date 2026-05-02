@@ -1,32 +1,65 @@
 steps:
-  # Step 1 — Build Docker image
+  # Step 1 — Build Docker image with immutable SHA tag + rolling latest
   - name: 'gcr.io/cloud-builders/docker'
     args:
       - 'build'
       - '-t'
+      - 'gcr.io/$PROJECT_ID/election-agent:$COMMIT_SHA'
+      - '-t'
       - 'gcr.io/$PROJECT_ID/election-agent:latest'
       - '.'
 
-  # Step 2 — Push image
+  # Step 2 — Push immutable SHA-tagged image to Container Registry
   - name: 'gcr.io/cloud-builders/docker'
-    args:
-      - 'push'
-      - 'gcr.io/$PROJECT_ID/election-agent:latest'
+    args: ['push', 'gcr.io/$PROJECT_ID/election-agent:$COMMIT_SHA']
 
-  # Step 3 — Deploy to Cloud Run
+  # Step 3 — Push latest tag
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'gcr.io/$PROJECT_ID/election-agent:latest']
+
+  # Step 4 — Deploy to Cloud Run using immutable SHA image
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
     entrypoint: gcloud
     args:
       - 'run'
       - 'deploy'
       - 'election-agent'
-      - '--image=gcr.io/$PROJECT_ID/election-agent:latest'
+      - '--image=gcr.io/$PROJECT_ID/election-agent:$COMMIT_SHA'
       - '--region=us-central1'
       - '--platform=managed'
       - '--allow-unauthenticated'
       - '--set-secrets=GEMINI_API_KEY=gemini-api-key:latest'
       - '--memory=512Mi'
-      - '--max-instances=5'
+      - '--cpu=1'
+      - '--min-instances=1'
+      - '--max-instances=10'
+      - '--concurrency=80'
+      - '--set-env-vars=APP_VERSION=4.0.0,LOG_LEVEL=INFO,PYTHONUNBUFFERED=1'
+
+  # Step 5 — Write deployment record to Google Cloud Logging
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: gcloud
+    args:
+      - 'logging'
+      - 'write'
+      - 'civvy-deployments'
+      - 'Civvy Election Guide $COMMIT_SHA deployed to Cloud Run'
+      - '--severity=NOTICE'
+
+  # Step 6 — Post-deploy health check
+  # SVC_URL avoids Cloud Build substitution conflict (no $ in var name)
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: bash
+    args:
+      - '-c'
+      - |
+        SVC_URL=$$(gcloud run services describe election-agent \
+          --region=us-central1 \
+          --format='value(status.url)')
+        echo "Health check: $$SVC_URL/health"
+        curl -sf "$$SVC_URL/health" && echo "Deployment healthy" \
+          || echo "Health check failed"
 
 images:
+  - 'gcr.io/$PROJECT_ID/election-agent:$COMMIT_SHA'
   - 'gcr.io/$PROJECT_ID/election-agent:latest'
